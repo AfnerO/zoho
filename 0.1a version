@@ -1,0 +1,60 @@
+
+invoice = zoho.books.getRecords("invoices",20077240675,"","allbooks");
+step = invoice.get("invoices");
+step = step.toJSONList();
+/*balance = step.get("balance");
+info balance;
+*/
+id_balance = Collection();
+for each  i in step
+{
+	project = i.get("project_name");
+	balance = i.get("balance");
+	branch = i.get("branch_name");
+	currency = i.get("currency_id");
+	id = i.get("invoice_id");
+	total = i.get("total");
+	customer = i.get("customer_name");
+	b_id = i.get("branch_id");
+	id_balance.insert(Collection(branch,project,id,balance,currency,total,customer,b_id));
+}
+books = zoho.books.getRecords("journals",20077240675,"","allbooks");
+journal = books.get("journals");
+for each  i in id_balance
+{
+	books = zoho.books.getRecords("journals",20077240675,"reference_number=" + i.get(2),"allbooks");
+	journal = books.get("journals");
+	if(journal != {})
+	{
+		if(journal.get(0).get("total") == (i.get(5).toDecimal() - i.get(3).toDecimal()) * 0.15)
+		{
+			info "Latest Update";
+		}
+		else
+		{
+			paid = (i.get(5).toDecimal() - i.get(3).toDecimal()) * 0.15;
+			diff = paid - journal.get(0).get("total");
+			journal_map = Map();
+			journal_map.put("journal_date","2022-02-11");
+			journal_map.put("reference_number",i.get(2));
+			journal_map.put("notes",journal.get(0).get("notes") + 1 + "Update");
+			journal_map.put("currency_id",i.get(4));
+			journal_map.put("branch_name",i.get(0));
+			journal_map.put("branch_id",i.get(7));
+			journal_map.put("line_items",{{"account_id":"161080000000461028","amount":diff,"debit_or_credit":"credit","project_id":i.get(1),"customer_name":i.get(6)},{"account_id":"161080000000461034","amount":diff,"debit_or_credit":"debit","project_id":i.get(1),"customer_name":i.get(6)}});
+		}
+	}
+	else
+	{
+		journal_map = Map();
+		journal_map.put("journal_date","2022-02-11");
+		journal_map.put("reference_number",i.get(2));
+		journal_map.put("notes",1);
+		journal_map.put("currency_id",i.get(4));
+		journal_map.put("branch_name",i.get(0));
+		journal_map.put("branch_id",i.get(7));
+		journal_map.put("line_items",{{"account_id":"161080000000461028","amount":(i.get(5).toDecimal() - i.get(3).toDecimal()) * 0.15,"debit_or_credit":"credit","project_id":i.get(1),"customer_name":i.get(6)},{"account_id":"161080000000461034","amount":(i.get(5).toDecimal() - i.get(3).toDecimal()) * 0.15,"debit_or_credit":"debit","project_id":i.get(1),"customer_name":i.get(6)}});
+		please_God = zoho.books.createRecord("journals","20077240675",journal_map,"allbooks");
+	}
+	info please_God;
+}
